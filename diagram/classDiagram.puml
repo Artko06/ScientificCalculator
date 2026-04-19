@@ -1,0 +1,115 @@
+@startuml
+
+package "math" {
+    class MathSolver {
+        + MathResult solve(String expression)
+    }
+
+    class Tokenizer <<object>> {
+        - Map<String, MathToken> operators
+        + List<MathToken> tokenize(String expression)
+    }
+
+    MathSolver ..> Tokenizer
+    MathSolver ..> MathToken
+    MathSolver ..> MathResult
+    Tokenizer ..> MathToken
+
+    enum CalculatorMode {
+            BASIC
+            ENGINEERING
+        }
+
+        abstract class MathResult <<sealed>>
+
+        class Success {
+            + String answer
+        }
+
+        class Error {
+            + String message
+        }
+
+        MathResult <|-- Success
+        MathResult <|-- Error
+
+        abstract class MathToken <<sealed>>
+
+        class Number {
+            + BigDecimal value
+        }
+
+        class Operator {
+            + String symbol
+            + int precedence
+            + boolean isRightAssociative
+        }
+
+        class LeftParen
+
+        class RightParen
+
+        MathToken <|-- Number
+        MathToken <|-- Operator
+        MathToken <|-- LeftParen
+        MathToken <|-- RightParen
+}
+
+package "viewModel" {
+    class CalculatorViewModel {
+        - MutableStateFlow<CalculatorState> _calculatorState
+        + StateFlow<CalculatorState> calculatorState
+        + onAction(CalculatorAction action): Unit
+    }
+
+    package "action" {
+        interface CalculatorAction <<sealed>>
+
+        class AddSymbolAction {
+            + String symbol
+        }
+
+        class BackspaceAction
+        class ClearAction
+        class EqualAction
+        class ToggleCalculatorMode
+        class ReturnToLastExpression
+
+        CalculatorAction <|-- AddSymbolAction
+        CalculatorAction <|-- BackspaceAction
+        CalculatorAction <|-- ClearAction
+        CalculatorAction <|-- EqualAction
+        CalculatorAction <|-- ToggleCalculatorMode
+        CalculatorAction <|-- ReturnToLastExpression
+    }
+
+    package "state" {
+        class CalculatorState {
+            + String expression
+            + String lastExpression
+            + boolean errorStatus
+            + String errorMessage
+            + CalculatorMode calculatorMode
+        }
+
+        CalculatorState --> CalculatorMode
+    }
+
+    CalculatorViewModel --> CalculatorState
+    CalculatorViewModel --> MathSolver
+    CalculatorViewModel --> CalculatorAction
+}
+
+package "view" {
+    class MainActivity {
+        + void onCreate(Bundle)
+    }
+
+    class CalculatorScreen
+
+    MainActivity ..> CalculatorScreen
+}
+
+CalculatorScreen ..> CalculatorViewModel
+
+@enduml
